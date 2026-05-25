@@ -7,6 +7,10 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
+packages = [
+    { include = "sensors", from = "src" }
+]
+
 
 [tool.poetry.dependencies]
 python = ">=3.10.0,<3.11"
