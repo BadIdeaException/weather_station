@@ -180,7 +180,7 @@ class CC1101:
             return self._on_falling
 
         @on_falling.setter
-        def on_falling(self, cb):
+        def on_falling(self, cb):            
             if cb and not self._cb_handle:
                 self._cb_handle = lgpio.callback(
                     self._gpio,
@@ -309,11 +309,14 @@ class CC1101:
         self.spi = CC1101.SPI()
         self.reset()
         for i, pin in enumerate(GDO_PINS):
-            setattr(
+            setattr(                
                 self, 
                 f"gdo{i}", 
                 CC1101.GDO(pin, self, i) if pin is not None else None,
             )
+
+        if self.partnum != 0x00 or self.version != 0x14:
+            raise RuntimeError('Radio module not found')
 
     def close(self):
         for i in range(3):
