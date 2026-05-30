@@ -1,3 +1,3 @@
-#from .sensor import TchiboOutdoor
+from .tchibo import Tchibo
 
-#__all__ = [ "TchiboOutdoor" ]
+__all__ = [ "Tchibo" ]
