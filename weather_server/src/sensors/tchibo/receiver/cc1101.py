@@ -141,6 +141,8 @@ class CC1101:
             self._gpio = lgpio.gpiochip_open(0)
             self._cb_handle = None
 
+            # Register callbacks lazily to avoid callback storm on
+            # unused GDO pins
             self._on_rising = None
             self._on_falling = None
 
@@ -158,6 +160,9 @@ class CC1101:
 
         @on_rising.setter
         def on_rising(self, cb):
+            # Register GPIO callback if not already present
+            # Only one callback can be registered, so it needs to be
+            # both for rising and falling edge
             if cb and not self._cb_handle:
                 lgpio.gpio_claim_alert(self._gpio, self.pin, lgpio.BOTH_EDGES)
 
@@ -168,6 +173,8 @@ class CC1101:
                     self._callback,
                 )
 
+            # Deregister GPIO callback if this was the last callback
+            # and it is being unset
             elif not cb and self._cb_handle and not self._on_falling:
                 lgpio.gpio_free(self._gpio, self.pin)
                 self._cb_handle.cancel()
@@ -180,7 +187,10 @@ class CC1101:
             return self._on_falling
 
         @on_falling.setter
-        def on_falling(self, cb):            
+        def on_falling(self, cb):
+            # Register GPIO callback if not already present
+            # Only one callback can be registered, so it needs to be
+            # both for rising and falling edge
             if cb and not self._cb_handle:
                 self._cb_handle = lgpio.callback(
                     self._gpio,
@@ -189,6 +199,8 @@ class CC1101:
                     self._callback,
                 )
 
+            # Deregister GPIO callback if this was the last callback
+            # and it is being unset
             elif not cb and self._cb_handle and not self._on_rising:
                 self._cb_handle.cancel()
                 self._cb_handle = None
@@ -432,6 +444,9 @@ class CC1101:
 
     @classmethod
     def closest_channel_bandwidth(cls, value) -> float:
+        """
+        Finds the closest valid channel bandwidth to `value`.
+        """
         return min(cls.CHANNEL_BANDWIDTHS, key=lambda bw: abs(bw - value))
 
     @property
@@ -459,6 +474,9 @@ class CC1101:
 
     @classmethod
     def closest_data_rate(cls, value) -> float:
+        """
+        Finds the closest valid data rate to `value`.
+        """
         return min(cls.DATA_RATES, key=lambda dr: abs(dr - value))
 
     @property
