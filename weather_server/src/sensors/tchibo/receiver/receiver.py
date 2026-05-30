@@ -34,7 +34,7 @@ class Receiver:
 
         self.cc1101 = cc1101
         self.framer = Framer(timings['timeout'], cc1101.gdo2)
-        self.demodulator = Demodulator(timings['one'], timings['zero'], timings['tolerance'])
+        self.demodulator = Demodulator(timings['zero'], timings['one'], timings['tolerance'])
 
     async def receive(self):
         async for frame in self.framer.frames():
