@@ -152,7 +152,7 @@ class CC1101:
             cb = self._on_rising if level == 1 else self._on_falling
 
             if cb is not None:
-                cb(timestamp, level, gdo=self)
+                cb(timestamp, level, source=self)
 
         @property
         def on_rising(self):
