@@ -37,8 +37,12 @@ class Receiver:
         self.demodulator = Demodulator(timings['zero'], timings['one'], timings['tolerance'])
 
     async def receive(self):
-        async for frame in self.framer.frames():
-            yield self.demodulator.demodulate(frame)
+        self.cc1101.rx()
+        try:
+            async for frame in self.framer.frames():
+                yield self.demodulator.demodulate(frame)
+        finally:
+            self.cc1101.idle()
 
     def __enter__(self):
         return self

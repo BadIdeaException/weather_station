@@ -80,6 +80,9 @@ class FakeCC1101:
     def __init__(self, edges):
         self.gdo2 = FakeEdgeSource(edges)        
 
+    def rx(self): pass
+    def idle(self): pass
+
 def encode(bits, timings, pulse = None):
     if pulse is None:
         pulse = min(timings['zero'], timings['one']) / 2
