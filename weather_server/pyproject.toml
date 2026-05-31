@@ -8,7 +8,8 @@ authors = [
 license = "MIT"
 readme = "README.md"
 packages = [
-    { include = "sensors", from = "src" }
+    { include = "sensors", from = "src" },
+    { include = "core", from = "src" }
 ]
 
 
