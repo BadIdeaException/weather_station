@@ -3,6 +3,7 @@ from .edge_source import EdgeSource
 import threading
 import time
 import asyncio
+from queue import Queue
 from collections.abc import Callable
 
 class Framer:
@@ -86,17 +87,16 @@ class Framer:
             # Callback to run when collector has finished a frame
             # Puts the frame into the frame queue, and re-enables
             # first rising edge notification callback
-            loop.call_soon_threadsafe(self._frames.put_nowait, edges)                
+            self._frames.put(edges)
             self.source.on_rising = start
 
         self.timeout = timeout
         self.source = source
-        self._frames = asyncio.Queue()
-        
+        self._frames = Queue()
+
         # on_rising will execute on the lgpio interrupt callback thread
         self.source.on_rising = start
         
-        loop = asyncio.get_event_loop()
         self.collector = self.Collector(timeout, source, max_length=max_length)
         # on_finish will execute on the collector thread (but marshals onto the application main thread)
         self.collector.on_finish = finish
@@ -105,7 +105,7 @@ class Framer:
     def close(self):
         self.source.on_rising = None
         self.collector.close()
-        self._frames.put_nowait(None) # Close the queue
+        self._frames.put(None) # Close the queue
 
     def __enter__(self):
         return self
@@ -120,6 +120,10 @@ class Framer:
         Do not call `frames` multiple times over the same `Framer`.
         Multiple concurrent consumers will compete for frames and
         each frame will be delivered to at most one consumer.
-        """
-        while (frame := await self._frames.get()) is not None:                
+        """        
+        while True:
+            frame = await asyncio.to_thread(self._frames.get)
+            if frame is None:
+                break
+
             yield tuple(frame)
