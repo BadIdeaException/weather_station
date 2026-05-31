@@ -23,3 +23,6 @@ class Tchibo:
                     yield reading
                 except ValueError:
                     pass # silently ignore packets with wrong length, as they are a normal part of RF operation
+
+    def close(self):
+        self.receiver.close()
