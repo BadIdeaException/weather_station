@@ -132,10 +132,9 @@ class TestFramer:
             (0.02, 0), (0.04, 1), (0.06, 0), (0.08, 1), (0.12, 0)
         ]    
 
-        with FakeEdgeSource(edges) as source, Framer(0.06, source, max_length=3) as framer:        
-            frame = await asyncio.wait_for(anext(framer.frames()), timeout=1.0)
-
-        assert len(frame) == 0
+        with FakeEdgeSource(edges) as source, Framer(0.06, source, max_length=3) as framer:
+            with pytest.raises(asyncio.TimeoutError):
+                frame = await asyncio.wait_for(anext(framer.frames()), timeout=1.0)
 
 
     @pytest.mark.asyncio
