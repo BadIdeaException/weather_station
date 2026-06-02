@@ -97,8 +97,12 @@ class BME280:
             return bytes(data)
 
 
-    def __init__(self, bus=1, address=DEVICE_ADDRESS, ttl=1.0):
+    def __init__(self, bus=1, address=DEVICE_ADDRESS, ttl=1.0, skip_reset: bool = False):
         self.i2c = self.I2C(bus, address)
+        if not skip_reset:
+            self.reset()
+            while self.im_update:
+                pass
 
         if self.chip_id != CHIP_ID:
             raise RuntimeError("BME280 not found")
