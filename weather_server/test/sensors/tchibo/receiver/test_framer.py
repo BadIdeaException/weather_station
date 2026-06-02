@@ -60,7 +60,7 @@ class FakeEdgeSource:
                     cb = self.on_falling
 
                 if cb is not None:
-                    cb(t_next, v_next, self)
+                    cb(t_next * 1e9, v_next, self)
 
         Thread(target=run, daemon=True).start()
 
