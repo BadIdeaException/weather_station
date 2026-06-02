@@ -45,14 +45,12 @@ class DataEngine:
                 source, reading = await queue.get()
                 
                 if source is self.builtin:
-                    temperature, pressure, humidity = reading
-                    self.data.inside_temperature = temperature
-                    self.data.pressure           = pressure
-                    self.data.inside_humidity    = humidity
+                    self.data.inside_temperature = reading['temperature']
+                    self.data.pressure           = reading['pressure']
+                    self.data.inside_humidity    = reading['humidity']
                 elif source is self.tchibo:
-                    temperature, humidity = reading
-                    self.data.outside_temperature = temperature
-                    self.data.outside_humidity    = humidity
+                    self.data.outside_temperature = reading['temperature']
+                    self.data.outside_humidity    = reading['humidity']
 
     def close(self):
         self.builtin.close()
