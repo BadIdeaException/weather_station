@@ -1,5 +1,5 @@
-# This image is (indirectly) based on the official ubuntu:jammy image, but includes git, curl, wget and some other stuff out of the box.
-FROM buildpack-deps:jammy
+# This image is (indirectly) based on the official ubuntu:noble image, but includes git, curl, wget and some other stuff out of the box.
+FROM buildpack-deps:noble
 
 ARG USERNAME=vagrant
 ARG UID=1000
@@ -7,6 +7,9 @@ ARG GID=1000
 ARG KEYFILE=
 
 # Set up default user
+RUN existing_user=$(getent passwd $UID | cut -d: -f1) && [ -z "$existing_user" ] || userdel -r "$existing_user" || true
+RUN existing_group=$(getent group $GID | cut -d: -f1) && [ -z "$existing_group" ] || groupdel "$existing_group" || true
+
 RUN groupadd -g $GID $USERNAME
 RUN useradd -m -u $UID -g $GID -s /bin/bash $USERNAME
 
