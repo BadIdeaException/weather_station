@@ -6,11 +6,11 @@ from dataclasses import dataclass
 
 @dataclass
 class WeatherData:
-    inside_temperature: float
-    inside_humidity: float
-    outside_temperature: float
-    outside_humidity: float
-    pressure: float
+    inside_temperature: float | None
+    inside_humidity: float | None
+    outside_temperature: float | None
+    outside_humidity: float | None
+    pressure: float | None
 
 
 class DataEngine:
@@ -20,11 +20,11 @@ class DataEngine:
         self.builtin = Builtin(builtin_interval)
         self.tchibo  = Tchibo()
         self.data = WeatherData(
-            inside_temperature = 0.0,
-            inside_humidity = 0.0,
-            outside_temperature = 0.0,
-            outside_humidity = 0.0,
-            pressure = 0.0
+            inside_temperature = None,
+            inside_humidity = None,
+            outside_temperature = None,
+            outside_humidity = None,
+            pressure = None
         )
 
     async def run(self):
