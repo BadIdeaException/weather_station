@@ -2,11 +2,19 @@ from __future__ import annotations
 from crccheck.crc import Crc
 crc4 = Crc(4, 0x13).calc
 
+
+class CRCError(ValueError):
+    def __init__(self, expected_crc, actual_crc):
+        super().__init__(f'CRC check failed ({actual_crc} /= {expected_crc})')
+        self.actual_crc = actual_crc
+        self.expected_crc = expected_crc
+
+
 class InFactory:
     """
     Decoder for the InFactory TH outdoor weather sensor
     """
-    def check_crc(self, bitstr):
+    def raise_for_crc(self, bitstr):
         packet = bytearray(int(bitstr[i:i+8], 2) for i in range(0, 40, 8))
 
         # CRC lives in high nibble, so right-shift
@@ -19,7 +27,8 @@ class InFactory:
         # final XOR with humidity high nibble. https://github.com/merbanan/rtl_433/blob/master/src/devices/infactory.c
         calculated_crc ^= (packet[4] >> 4)
 
-        return calculated_crc == expected_crc
+        if calculated_crc != expected_crc:
+            raise CRCError(expected_crc, calculated_crc)
     
     def decode(self, bitstr):
         """
@@ -44,9 +53,8 @@ class InFactory:
         if len(bitstr) != 40:
             raise ValueError(f'Packet has wrong length. Expected 40 but got {len(bitstr)}. Packet was {bitstr}.')          
         
-        if not self.check_crc(bitstr):
-            raise ValueError(f'CRC check failed.')   
-
+        self.raise_for_crc(bitstr)
+        
         device_id   = int(bitstr[0:8], 2)
         # bits 8-11 CRC
         # bit 12 TX button

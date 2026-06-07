@@ -1,5 +1,5 @@
 import pytest
-from sensors.tchibo.infactory import InFactory
+from sensors.tchibo.infactory import InFactory, CRCError
 
 class TestInFactory:
     @pytest.fixture
@@ -15,9 +15,8 @@ class TestInFactory:
 
     def test_throws_on_crc_fail(self, input):
         decoder = InFactory()
-        input = input[:7] + '0000' + input[13:] # Overwrite CRC
-
-        with pytest.raises(ValueError):
+        input = input[:9] + '0000' + input[13:] # Overwrite CRC
+        with pytest.raises(CRCError):
             decoder.decode(input)
 
     def test_decodes_values(self, input):
