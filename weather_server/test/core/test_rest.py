@@ -14,7 +14,11 @@ class TestREST:
             inside_humidity = 11,
             outside_temperature = 20.0,
             outside_humidity = 21,
-            pressure = 1000            
+            pressure = 1000,
+            code = 30,
+            wind_direction = 330,
+            wind_speed = 40.0,
+            wind_gusts = 41.0
         )
         engine = mocker.MagicMock(spec=DataEngine)
         engine.data = data
