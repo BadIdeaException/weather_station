@@ -9,7 +9,8 @@ license = "MIT"
 readme = "README.md"
 packages = [
     { include = "sensors", from = "src" },
-    { include = "core", from = "src" }
+    { include = "core", from = "src" },
+    { include = "model", from = "src" }
 ]
 
 

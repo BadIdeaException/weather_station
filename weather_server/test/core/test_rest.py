@@ -1,5 +1,6 @@
 import pytest
-from core.data_engine import WeatherData, DataEngine
+from core.data_engine import DataEngine
+from model.weather import WeatherData
 from core.rest import REST
 from fastapi.testclient import TestClient
 from dataclasses import fields, asdict
@@ -13,7 +14,7 @@ class TestREST:
             inside_humidity = 11,
             outside_temperature = 20.0,
             outside_humidity = 21,
-            pressure = 1000
+            pressure = 1000            
         )
         engine = mocker.MagicMock(spec=DataEngine)
         engine.data = data
