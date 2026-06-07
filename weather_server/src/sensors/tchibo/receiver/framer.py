@@ -1,10 +1,16 @@
 from __future__ import annotations
 from .edge_source import EdgeSource
 import threading
-import time
 import asyncio
-from queue import Queue
-from collections.abc import Callable
+import contextlib
+from queue import Queue, Full as QueueFullError
+
+
+class FrameError(RuntimeError):
+    def __init__(self, frame):
+        super().__init__(f'Frame too long. Frame was {len(frame)} edges')
+        self.frame = frame
+
 
 class Framer:
     def __init__(self, timeout: float, source: EdgeSource, max_length=500):
@@ -13,6 +19,7 @@ class Framer:
         self.source = source
         
         self._frames = Queue()
+        self._status = Queue(maxsize=100)
         self._current_frame = []
         self._lock = threading.Lock()
         self._timer = None
@@ -29,6 +36,8 @@ class Framer:
 
             self._current_frame.append((timestamp, level))
             if len(self._current_frame) > self.max_length:
+                with contextlib.suppress(QueueFullError):
+                    self._status.put_nowait(FrameError(self._current_frame))
                 self._current_frame = []
                 self._timer = None
                 return
@@ -54,9 +63,16 @@ class Framer:
         while True:
             frame = await asyncio.to_thread(self._frames.get)
             if frame is None:
-                break
-
+                return
             yield tuple(frame)
+
+
+    async def status(self):
+        while True:
+            event = await asyncio.to_thread(self._status.get)
+            if event is None:
+                break
+            yield event
 
 
     def close(self):
@@ -65,7 +81,9 @@ class Framer:
         with self._lock:
             if self._timer is not None:
                 self._timer.cancel()
-        self._frames.put(None)
+            self._frames.put_nowait(None)
+            self._status.put_nowait(None)
+
 
     def __enter__(self):
         return self

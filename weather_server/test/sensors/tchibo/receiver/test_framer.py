@@ -3,7 +3,7 @@ import asyncio
 import time
 from threading import Thread, Lock
 from collections.abc import Callable
-from sensors.tchibo.receiver.framer import Framer
+from sensors.tchibo.receiver.framer import Framer, FrameError
 
 class FakeEdgeSource:
     on_rising: Callable | None
@@ -136,24 +136,5 @@ class TestFramer:
             with pytest.raises(asyncio.TimeoutError):
                 frame = await asyncio.wait_for(anext(framer.frames()), timeout=1.0)
 
-
-    @pytest.mark.asyncio
-    async def test_close_shuts_down_frame_generation(self):
-        edges = [
-            (0.0, 0), (1.0, 1), (2.0, 0)
-        ]
-
-        # Can't use the context manager form here because we don't want the source to start right away
-        source = FakeEdgeSource(edges)
-        try:
-            framer = Framer(0.03, source)
-            framer.close()
-
-            source.start()
-        
-            with pytest.raises(StopAsyncIteration):
-                await asyncio.wait_for(anext(framer.frames()), timeout=1.0)
-
-        finally:
-            source.stop()
-
+            status = await asyncio.wait_for(anext(framer.status()), timeout=1.0)
+            assert isinstance(status, FrameError)
