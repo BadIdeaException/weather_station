@@ -34,16 +34,3 @@ class TestBuiltin:
             t1 = time.monotonic()
 
             assert t1 == pytest.approx(t0 + INTERVAL, rel=0.01)
-
-
-    @pytest.mark.asyncio
-    async def test_close_terminates_generator(self, mocker):
-        bme280 = mocker.MagicMock(spec=BME280)
-        bme280.measuring = False
-        with Builtin(1.0, bme280) as builtin:
-            gen = builtin.readings()
-
-            builtin.close()
-
-            with pytest.raises(StopAsyncIteration):
-                await asyncio.wait_for(anext(gen), 0.1)

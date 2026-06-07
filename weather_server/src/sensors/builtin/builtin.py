@@ -11,14 +11,13 @@ class Builtin:
 
         self.bme280 = bme280
         self.interval = interval
-        self._closed = False
 
     async def readings(self):
         def wait_for_measurement():
             while self.bme280.measuring:
                 pass
 
-        while not self._closed:
+        while True:
             # Force a measurement
             self.bme280.mode = BME280.Mode.FORCED
             # Wait until measurement is complete
@@ -31,7 +30,6 @@ class Builtin:
             await asyncio.sleep(self.interval)
 
     def close(self):
-        self._closed = True
         self.bme280.close()
 
     def __enter__(self):
