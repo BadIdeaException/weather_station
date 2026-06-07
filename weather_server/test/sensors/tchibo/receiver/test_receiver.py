@@ -103,3 +103,19 @@ class TestReceiver:
             "generator_finished",
             "idle",
         ]
+
+
+    @pytest.mark.asyncio
+    async def test_forwards_framer_status(self, mocker):
+        error = RuntimeError()
+        async def status():
+            yield error
+
+        cc1101 = mocker.MagicMock(spec=CC1101)
+        cc1101.gdo2 = mocker.MagicMock(spec=CC1101.GDO)
+
+        receiver = Receiver(self.TIMINGS, cc1101)
+        mock_frames = mocker.patch.object(receiver.framer, 'status', return_value=status())
+
+        result = await asyncio.wait_for(anext(receiver.status()), timeout=1.0)
+        assert result is error

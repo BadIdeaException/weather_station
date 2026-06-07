@@ -36,6 +36,7 @@ class Receiver:
         self.framer = Framer(timings['timeout'], cc1101.gdo2)
         self.demodulator = Demodulator(timings['zero'], timings['one'], timings['tolerance'])
 
+
     async def receive(self):
         self.cc1101.rx()
         try:
@@ -43,6 +44,12 @@ class Receiver:
                 yield self.demodulator.demodulate(frame)
         finally:
             self.cc1101.idle()
+
+
+    async def status(self):
+        async for event in self.framer.status():
+            yield event
+
 
     def __enter__(self):
         return self
