@@ -4,17 +4,24 @@ crc4 = Crc(4, 0x13).calc
 
 
 class CRCError(ValueError):
-    def __init__(self, expected_crc, actual_crc):
-        super().__init__(f'CRC check failed ({actual_crc} /= {expected_crc})')
+    def __init__(self, expected_crc: int, actual_crc: int, packet: str):
+        super().__init__(f'CRC check failed ({hex(actual_crc)} /= {hex(expected_crc)})')
         self.actual_crc = actual_crc
         self.expected_crc = expected_crc
+        self.packet = packet
+
+
+class PacketLengthError(ValueError):
+    def __init__(self, packet: str):
+        super().__init__(f'Packet has wrong length. Expected 40 but got {len(packet)}.')
+        self.packet = packet
 
 
 class InFactory:
     """
     Decoder for the InFactory TH outdoor weather sensor
     """
-    def raise_for_crc(self, bitstr):
+    def raise_for_crc(self, bitstr: str):
         packet = bytearray(int(bitstr[i:i+8], 2) for i in range(0, 40, 8))
 
         # CRC lives in high nibble, so right-shift
@@ -28,9 +35,10 @@ class InFactory:
         calculated_crc ^= (packet[4] >> 4)
 
         if calculated_crc != expected_crc:
-            raise CRCError(expected_crc, calculated_crc)
+            raise CRCError(expected_crc, calculated_crc, bitstr)
+
     
-    def decode(self, bitstr):
+    def decode(self, bitstr: str):
         """
         Decodes an InFactory TH message into a `Reading`.
 
@@ -51,7 +59,7 @@ class InFactory:
         #      - t: Temperature // in °F as binary number with one decimal place + 90 °F offset
         #      - n: Channel // Channel number 1 - 3
         if len(bitstr) != 40:
-            raise ValueError(f'Packet has wrong length. Expected 40 but got {len(bitstr)}. Packet was {bitstr}.')          
+            raise PacketLengthError(bitstr)
         
         self.raise_for_crc(bitstr)
         
