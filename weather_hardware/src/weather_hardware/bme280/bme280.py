@@ -1,6 +1,6 @@
 from __future__ import annotations
 from enum import IntEnum
-import lgpio
+from ..pi import I2C
 import time
 from dataclasses import dataclass
 from struct import unpack_from
@@ -78,27 +78,8 @@ class BME280:
         dig_H5: int
         dig_H6: int
 
-    class I2C:
-        def __init__(self, bus, address):
-            self.address = address
-            self.handle = lgpio.i2c_open(bus, address)
-
-        def close(self):
-            lgpio.i2c_close(self.handle)
-
-        def read_byte(self, register):
-            return lgpio.i2c_read_byte_data(self.handle, register)
-
-        def write_byte(self, register, value):
-            lgpio.i2c_write_byte_data(self.handle, register, value)
-
-        def read_block(self, register, count):
-            _, data = lgpio.i2c_read_i2c_block_data(self.handle, register, count)
-            return bytes(data)
-
-
     def __init__(self, bus=1, address=DEVICE_ADDRESS, ttl=1.0, skip_reset: bool = False):
-        self.i2c = self.I2C(bus, address)
+        self.i2c = I2C(bus, address)
         if not skip_reset:
             self.reset()
             while self.im_update:

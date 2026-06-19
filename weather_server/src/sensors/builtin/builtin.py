@@ -1,4 +1,4 @@
-from .bme280 import BME280
+from weather_hardware.bme280 import BME280
 import asyncio
 
 class Builtin:

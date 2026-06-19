@@ -68,8 +68,6 @@ Vagrant.configure("2") do |config|
   SHELL
   config.vm.provision 'file', source: '~/Programmieren/.dev/aider.conf.yml', destination: '/home/vagrant/.aider.conf.yml'
 
-  config.vm.synced_folder '../weather_hardware', '/weather_hardware'
-  
   config.ssh.username=USERNAME
   config.ssh.private_key_path="#{USERNAME}.key"
 

@@ -1,4 +1,4 @@
-from .cc1101 import CC1101
+from weather_hardware.cc1101 import CC1101
 from .framer import Framer
 from .demodulator import Demodulator
 

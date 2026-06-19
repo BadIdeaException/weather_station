@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "weather_hardware"
+version = "1.0.0"
+description = ""
+authors = [
+    "BadIdeaException"
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "weather_hardware", from = "src" }
+]
+
+
+[tool.poetry.dependencies]
+python = ">=3.11.0"
+lgpio = "^0.2.2.0"
+
+[tool.poetry.group.dev.dependencies]
+pylint = ">=4.0.4,<5.0.0"
+black = ">=25.12.0,<26.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,7 +1,8 @@
 from __future__ import annotations
 from enum import IntEnum
 from typing import Generic, TypeVar
-import lgpio
+from ..pi import SPI as RawSPI
+from ..pi import GPIO
 
 
 F_X_OSC = 26e06  # Frequency of the crystal oscillator is 26.0 MHz
@@ -107,105 +108,12 @@ class CC1101:
         for mantissa in range(256)
     ]
 
-    class SPI:
-        def __init__(self, bus=0, device=0, mode=0):
-            self._handle = lgpio.spi_open(bus, device, 50000, mode & 0x03)
-
-        def close(self):
-            lgpio.spi_close(self._handle)
-
-        def write_single(self, addr, value):
-            lgpio.spi_write(self._handle, [addr | WRITE_SINGLE, value])
-
-        def read_single(self, addr):
-            _, rx = lgpio.spi_xfer(self._handle, [addr | READ_SINGLE, 0x00])
-            return rx[1]
-
-        def write_burst(self, addr, value):
-            lgpio.spi_write(self._handle, [addr | WRITE_BURST, value])
-
-        def read_burst(self, addr):
-            _, rx = lgpio.spi_xfer(self._handle, [addr | READ_BURST, 0x00])
-            return rx[1]
-
-        def strobe(self, cmd):
-            lgpio.spi_write(self._handle, [cmd])
-
-    class GDO:
+    class GDO(GPIO):
         def __init__(self, pin, parent, gdo_number):
-            self.pin = pin
-
+            super().__init__(pin, GPIO.IN)
+            
             self._parent = parent
             self._gdo_number = gdo_number
-
-            self._gpio = lgpio.gpiochip_open(0)
-            self._cb_handle = None
-
-            # Register callbacks lazily to avoid callback storm on
-            # unused GDO pins
-            self._on_rising = None
-            self._on_falling = None
-
-            self.on_error = None
-
-        def _callback(self, chip, pin, level, timestamp):
-            cb = self._on_rising if level == 1 else self._on_falling
-
-            if cb is not None:
-                cb(timestamp, level, source=self)
-
-        @property
-        def on_rising(self):
-            return self._on_rising
-
-        @on_rising.setter
-        def on_rising(self, cb):
-            # Register GPIO callback if not already present
-            # Only one callback can be registered, so it needs to be
-            # both for rising and falling edge
-            if cb and not self._cb_handle:
-                lgpio.gpio_claim_alert(self._gpio, self.pin, lgpio.BOTH_EDGES)
-
-                self._cb_handle = lgpio.callback(
-                    self._gpio,
-                    self.pin,
-                    lgpio.BOTH_EDGES,
-                    self._callback,
-                )
-
-            # Deregister GPIO callback if this was the last callback
-            # and it is being unset
-            elif not cb and self._cb_handle and not self._on_falling:
-                lgpio.gpio_free(self._gpio, self.pin)
-                self._cb_handle.cancel()
-                self._cb_handle = None
-
-            self._on_rising = cb
-
-        @property
-        def on_falling(self):
-            return self._on_falling
-
-        @on_falling.setter
-        def on_falling(self, cb):
-            # Register GPIO callback if not already present
-            # Only one callback can be registered, so it needs to be
-            # both for rising and falling edge
-            if cb and not self._cb_handle:
-                self._cb_handle = lgpio.callback(
-                    self._gpio,
-                    self.pin,
-                    lgpio.BOTH_EDGES,
-                    self._callback,
-                )
-
-            # Deregister GPIO callback if this was the last callback
-            # and it is being unset
-            elif not cb and self._cb_handle and not self._on_rising:
-                self._cb_handle.cancel()
-                self._cb_handle = None
-
-            self._on_falling = cb
 
         @property
         def mode(self) -> CC1101.IOConfig:
@@ -223,17 +131,26 @@ class CC1101:
         def inverted(self, value: bool):
             setattr(self._parent, f"gdo{self._gdo_number}_inv", value)
 
-        def read(self) -> int:
-            return lgpio.gpio_read(self._gpio, self.pin)
+    class SPI(RawSPI):
+        """
+        SPI specialization that mirrors the specific way CC1101 uses SPI
+        """
+        def write_single(self, addr, value):
+            super().write([addr | WRITE_SINGLE, value])
 
-        def close(self):
-            if self._cb_handle:
-                self._cb_handle.cancel()
-                self._cb_handle = None
+        def read_single(self, addr):
+            rx = super().xfer([addr | READ_SINGLE, 0x00])
+            return rx[1]
 
-                lgpio.gpio_free(self._gpio, self.pin)
+        def write_burst(self, addr, value):
+            super().write([addr | WRITE_BURST, value])
 
-            lgpio.gpiochip_close(self._gpio)
+        def read_burst(self, addr):
+            rx = super().xfer([addr | READ_BURST, 0x00])
+            return rx[1]
+
+        def strobe(self, cmd):
+            super().write([cmd])
 
     class ModulationFormat(IntEnum):
         FSK2 = 0
@@ -318,7 +235,7 @@ class CC1101:
         TO_IDLE_INTERMITTENT = 3
 
     def __init__(self):
-        self.spi = CC1101.SPI()
+        self.spi = CC1101.SPI(0, 0)
         self.reset()
         for i, pin in enumerate(GDO_PINS):
             setattr(                
